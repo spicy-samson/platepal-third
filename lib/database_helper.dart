@@ -174,7 +174,7 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<Map<String, dynamic>>> queryIngredientsByRecipe(int recipeId) async {
+  Future<List<Map<String, dynamic>>> getRecipeIngredients(int recipeId) async {
     try {
       Database db = await instance.database;
       var result = await db.rawQuery('''
@@ -183,10 +183,10 @@ class DatabaseHelper {
         JOIN recipe_ingredients ON ingredients.id = recipe_ingredients.ingredient_id
         WHERE recipe_ingredients.recipe_id = ?
       ''', [recipeId]);
-      print("Queried ${result.length} ingredients for recipe $recipeId");
+      print("Retrieved ${result.length} ingredients for recipe $recipeId");
       return result;
     } catch (e) {
-      print("Error querying ingredients by recipe: $e");
+      print("Error retrieving ingredients for recipe: $e");
       rethrow;
     }
   }
@@ -253,16 +253,21 @@ class DatabaseHelper {
   }
 
   Future<List<Map<String, dynamic>>> searchRecipes(String query) async {
-    try {
-      Database db = await instance.database;
-      var result = await db.query('recipes', where: 'name LIKE ?', whereArgs: ['%$query%']);
-      print("Found ${result.length} recipes matching query: $query");
-      return result;
-    } catch (e) {
-      print("Error searching recipes: $e");
-      rethrow;
+      try {
+        Database db = await instance.database;
+        var result = await db.rawQuery('''
+          SELECT recipes.*, recipe_categories.name as category_name
+          FROM recipes
+          JOIN recipe_categories ON recipes.category_id = recipe_categories.id
+          WHERE recipes.name LIKE ?
+        ''', ['%$query%']);
+        print("Found ${result.length} recipes matching query: $query");
+        return result;
+      } catch (e) {
+        print("Error searching recipes: $e");
+        rethrow;
+      }
     }
-  }
 
   Future<void> updateRecipeStarred(int id, int isStarred) async {
     try {
@@ -279,4 +284,5 @@ class DatabaseHelper {
       rethrow;
     }
   }
+  
 }

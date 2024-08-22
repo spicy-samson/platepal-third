@@ -20,7 +20,7 @@ class Home extends StatelessWidget {
               height: 100,
               width: 100,
             ),
-            const SizedBox(height: 16), // Spacing between the logo and text
+            const SizedBox(height: 16),
             const Text(
               'PlatePal',
               style: TextStyle(
@@ -28,7 +28,7 @@ class Home extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 40), // Spacing before the buttons
+            const SizedBox(height: 40),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
@@ -38,7 +38,7 @@ class Home extends StatelessWidget {
               },
               child: const Text('Search by Recipe'),
             ),
-            const SizedBox(height: 16), // Spacing between buttons
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
@@ -48,7 +48,7 @@ class Home extends StatelessWidget {
               },
               child: const Text('Search by Ingredients'),
             ),
-            const SizedBox(height: 16), // Spacing between buttons
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
@@ -63,7 +63,6 @@ class Home extends StatelessWidget {
       ),
     );
   }
-
   AppBar appbar(BuildContext context) {
     return AppBar(
       title: Row(
