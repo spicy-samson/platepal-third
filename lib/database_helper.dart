@@ -96,7 +96,11 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> queryAllRecipes() async {
     try {
       Database db = await instance.database;
-      var result = await db.query('recipes');
+      var result = await db.rawQuery('''
+        SELECT recipes.*, recipe_categories.name as category_name
+        FROM recipes
+        JOIN recipe_categories ON recipes.category_id = recipe_categories.id
+      ''');
       print("Queried ${result.length} recipes");
       return result;
     } catch (e) {
@@ -105,12 +109,21 @@ class DatabaseHelper {
     }
   }
 
-  Future<Map<String, dynamic>?> getRecipeById(int id) async {
+  Future<Map<String, dynamic>> getRecipe(int id) async {
     try {
       Database db = await instance.database;
-      List<Map<String, dynamic>> results = await db.query('recipes', where: 'id = ?', whereArgs: [id]);
+      var results = await db.rawQuery('''
+        SELECT recipes.*, recipe_categories.name as category_name
+        FROM recipes
+        JOIN recipe_categories ON recipes.category_id = recipe_categories.id
+        WHERE recipes.id = ?
+      ''', [id]);
       print("Queried recipe with id $id. Found: ${results.isNotEmpty}");
-      return results.isNotEmpty ? results.first : null;
+      if (results.isNotEmpty) {
+        return results.first;
+      } else {
+        throw Exception('Recipe not found');
+      }
     } catch (e) {
       print("Error getting recipe by id: $e");
       rethrow;
@@ -247,6 +260,22 @@ class DatabaseHelper {
       return result;
     } catch (e) {
       print("Error searching recipes: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> updateRecipeStarred(int id, int isStarred) async {
+    try {
+      Database db = await instance.database;
+      await db.update(
+        'recipes',
+        {'is_starred': isStarred},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      print("Updated starred status for recipe with id: $id to $isStarred");
+    } catch (e) {
+      print("Error updating recipe starred status: $e");
       rethrow;
     }
   }

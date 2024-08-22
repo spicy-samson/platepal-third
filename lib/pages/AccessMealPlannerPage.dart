@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:platepal/database_helper.dart';
+import 'package:platepal/pages/RecipePreviewPage.dart';
 
 class MealPlannerPage extends StatefulWidget {
   const MealPlannerPage({super.key});
@@ -141,13 +142,20 @@ class _MealPlannerPageState extends State<MealPlannerPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  mealPlan[day]?[mealType] ?? 'Add a meal',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: mealPlan[day]?[mealType] != null ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                Expanded(
+                  child: Text(
+                    mealPlan[day]?[mealType] ?? 'Add a meal',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: mealPlan[day]?[mealType] != null ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                    ),
                   ),
                 ),
+                if (mealPlan[day]?[mealType] != null)
+                  IconButton(
+                    icon: const Icon(Icons.visibility, color: Color(0xFF64748B)),
+                    onPressed: () => _previewRecipe(mealPlan[day]![mealType]!),
+                  ),
                 IconButton(
                   icon: const Icon(Icons.add, color: Color(0xFF64748B)),
                   onPressed: () => _showAddMealDialog(context, day, mealType),
@@ -197,5 +205,15 @@ class _MealPlannerPageState extends State<MealPlannerPage> {
     setState(() {
       mealPlan[day]?[mealType] = recipeName;
     });
+  }
+
+  void _previewRecipe(String recipeName) {
+    final recipe = recipes.firstWhere((r) => r['name'] == recipeName);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RecipePreviewPage(recipeId: recipe['id']),
+      ),
+    ).then((_) => _loadRecipes()); // Reload recipes after returning from preview
   }
 }
