@@ -4,11 +4,15 @@ import 'package:flutter_svg/flutter_svg.dart';
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final bool showBackButton;
+  final List<Widget>? actions;
+  final PreferredSizeWidget? bottom;
 
   const CustomAppBar({
     Key? key,
     this.title = 'PlatePal',
     this.showBackButton = true,
+    this.actions,
+    this.bottom,
   }) : super(key: key);
 
   @override
@@ -55,11 +59,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             )
           : null,
+      actions: actions,
       backgroundColor: Colors.white,
       elevation: 0,
+      bottom: bottom,
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => Size.fromHeight(kToolbarHeight + (bottom?.preferredSize.height ?? 0.0));
 }

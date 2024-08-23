@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:platepal/database_helper.dart';
 import 'package:platepal/components/RecipeCard.dart';
+import 'package:platepal/components/AppBar.dart';
 
 class SearchByRecipePage extends StatefulWidget {
-  const SearchByRecipePage({Key? key}) : super(key: key);
+  const SearchByRecipePage({super.key});
 
   @override
   // ignore: library_private_types_in_public_api
@@ -85,15 +86,15 @@ class _SearchByRecipePageState extends State<SearchByRecipePage> with TickerProv
               builder: (_, controller) {
                 return Column(
                   children: [
-                    AppBar(
-                      title: const Text('Search Recipes'),
-                      leading: IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                      ),
+                    CustomAppBar(
+                      title: 'Search Recipes',
+                      showBackButton: false,
+                      actions: [
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
                     ),
                     Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -148,8 +149,8 @@ class _SearchByRecipePageState extends State<SearchByRecipePage> with TickerProv
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('What to cook?'),
+      appBar: CustomAppBar(
+        title: 'What to cook?',
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
