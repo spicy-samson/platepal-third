@@ -3,9 +3,14 @@ import 'package:platepal/pages/RecipePreviewPage.dart';
 
 class RecipeCard extends StatelessWidget {
   final Map<String, dynamic> recipe;
+  final int recipeId;
   final double imageHeight = 200.0; // Fixed height for the image
 
-  const RecipeCard({Key? key, required this.recipe}) : super(key: key);
+  const RecipeCard({
+    Key? key,
+    required this.recipe,
+    required this.recipeId,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +19,7 @@ class RecipeCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => RecipePreviewPage(recipeId: recipe['id']),
+            builder: (context) => RecipePreviewPage(recipeId: recipeId),
           ),
         );
       },
@@ -34,6 +39,15 @@ class RecipeCard extends StatelessWidget {
                     height: imageHeight,
                     width: double.infinity,
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: imageHeight,
+                        color: Colors.grey[300],
+                        child: const Center(
+                          child: Icon(Icons.error, color: Colors.red),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 Padding(
@@ -48,14 +62,35 @@ class RecipeCard extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.all(12.0),
-              child: Text(
-                recipe['name'],
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    recipe['name'],
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Difficulty: ${recipe['difficulty'] ?? 'N/A'}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Calories: ${recipe['calories'] ?? 'N/A'} kcal',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

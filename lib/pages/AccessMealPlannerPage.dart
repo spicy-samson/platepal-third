@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:platepal/database_helper.dart';
 import 'package:platepal/pages/RecipePreviewPage.dart';
+import 'package:platepal/components/AppBar.dart';
 
 class MealPlannerPage extends StatefulWidget {
   const MealPlannerPage({super.key});
@@ -42,12 +43,7 @@ class _MealPlannerPageState extends State<MealPlannerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC), // Slate 50
-      appBar: AppBar(
-        title: const Text('Meal Planner', style: TextStyle(color: Color(0xFF0F172A))), // Slate 900
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF0F172A)), // Slate 900
-      ),
+      appBar: const CustomAppBar(title: 'Meal Planner'),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
