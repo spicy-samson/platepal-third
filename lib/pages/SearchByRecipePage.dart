@@ -101,7 +101,7 @@ class _SearchByRecipePageState extends State<SearchByRecipePage> with TickerProv
                       child: TextField(
                         controller: _searchController,
                         decoration: InputDecoration(
-                          hintText: 'Search recipes by ingredients or name',
+                          hintText: 'Search recipes...',
                           prefixIcon: const Icon(Icons.search),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(25),
