@@ -13,132 +13,117 @@ class SearchByIngredientsPage extends StatefulWidget {
   _SearchByIngredientsPageState createState() => _SearchByIngredientsPageState();
 }
 
-class _SearchByIngredientsPageState extends State<SearchByIngredientsPage> {
-  List<String> categories = ['All', 'Dish', 'Dessert', 'Snack', 'Dietary'];
+class _SearchByIngredientsPageState extends State<SearchByIngredientsPage> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   List<String> ingredientCategories = ['All', 'Meat', 'Vegetables and Fruits', 'Seafood', 'Spices and herbs', 'Condiments'];
-  String selectedCategory = 'All';
-  String selectedIngredientCategory = 'All';
   List<Ingredient> selectedIngredients = [];
-  List<Ingredient> availableIngredients = [];
+  Map<String, List<Ingredient>> categoryIngredients = {};
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: ingredientCategories.length, vsync: this);
     _loadIngredients();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadIngredients() async {
     final ingredients = await DatabaseHelper.instance.queryAllIngredients();
     setState(() {
-      availableIngredients = ingredients.map((map) => Ingredient.fromMap(map)).toList();
+      for (var category in ingredientCategories) {
+        categoryIngredients[category] = ingredients
+            .map((map) => Ingredient.fromMap(map))
+            .where((ingredient) => category == 'All' || ingredient.category == category)
+            .toList();
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('What to cook?')),
+      appBar: AppBar(
+        title: const Text('Search by Ingredients'),
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabs: ingredientCategories.map((category) => Tab(text: category)).toList(),
+        ),
+      ),
       body: Column(
         children: [
-          _buildCategoryFilter(),
           _buildSelectedIngredients(),
-          Text('What\'s your Ingredients?', style: Theme.of(context).textTheme.titleLarge),
-          _buildIngredientCategoryFilter(),
-          Expanded(child: _buildIngredientGrid()),
-          ElevatedButton(
-            onPressed: _searchRecipes,
-            child: const Text('Search'),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: ingredientCategories.map((category) => _buildIngredientGrid(category)).toList(),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: _searchRecipes,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(50),
+              ),
+              child: const Text('Search Recipes'),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCategoryFilter() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: categories.map((category) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: ChoiceChip(
-              label: Text(category),
-              selected: selectedCategory == category,
-              onSelected: (selected) {
-                setState(() {
-                  selectedCategory = category;
-                });
-              },
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
   Widget _buildSelectedIngredients() {
-    return SizedBox(
+    return Container(
       height: 100,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: selectedIngredients.length,
-        itemBuilder: (context, index) {
-          return SelectedIngredientItem(
-            ingredient: selectedIngredients[index],
-            onRemove: () {
-              setState(() {
-                selectedIngredients.removeAt(index);
-              });
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildIngredientCategoryFilter() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: ingredientCategories.map((category) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: ChoiceChip(
-              label: Text(category),
-              selected: selectedIngredientCategory == category,
-              onSelected: (selected) {
-                setState(() {
-                  selectedIngredientCategory = category;
-                });
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: selectedIngredients.isEmpty
+          ? const Center(child: Text('Select ingredients to start'))
+          : ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: selectedIngredients.length,
+              itemBuilder: (context, index) {
+                return SelectedIngredientItem(
+                  ingredient: selectedIngredients[index],
+                  onRemove: () {
+                    setState(() {
+                      selectedIngredients.removeAt(index);
+                    });
+                  },
+                );
               },
             ),
-          );
-        }).toList(),
-      ),
     );
   }
 
-  Widget _buildIngredientGrid() {
-    List<Ingredient> filteredIngredients = selectedIngredientCategory == 'All'
-        ? availableIngredients
-        : availableIngredients.where((ingredient) => ingredient.category == selectedIngredientCategory).toList();
+  Widget _buildIngredientGrid(String category) {
+    List<Ingredient> ingredients = categoryIngredients[category] ?? [];
 
     return GridView.builder(
+      padding: const EdgeInsets.all(8.0),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
+        crossAxisCount: 3,
         childAspectRatio: 0.75,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
       ),
-      itemCount: filteredIngredients.length,
+      itemCount: ingredients.length,
       itemBuilder: (context, index) {
         return IngredientItem(
-          ingredient: filteredIngredients[index],
-          isSelected: selectedIngredients.contains(filteredIngredients[index]),
+          ingredient: ingredients[index],
+          isSelected: selectedIngredients.contains(ingredients[index]),
           onTap: () {
             setState(() {
-              if (selectedIngredients.contains(filteredIngredients[index])) {
-                selectedIngredients.remove(filteredIngredients[index]);
+              if (selectedIngredients.contains(ingredients[index])) {
+                selectedIngredients.remove(ingredients[index]);
               } else {
-                selectedIngredients.add(filteredIngredients[index]);
+                selectedIngredients.add(ingredients[index]);
               }
             });
           },
@@ -148,6 +133,13 @@ class _SearchByIngredientsPageState extends State<SearchByIngredientsPage> {
   }
 
   void _searchRecipes() async {
+    if (selectedIngredients.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select at least one ingredient')),
+      );
+      return;
+    }
+
     List<int> selectedIngredientIds = selectedIngredients.map((i) => i.id).toList();
     final recipes = await DatabaseHelper.instance.searchRecipesByIngredients(selectedIngredientIds);
     
