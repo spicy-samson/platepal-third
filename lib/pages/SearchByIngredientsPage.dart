@@ -82,24 +82,57 @@ class _SearchByIngredientsPageState extends State<SearchByIngredientsPage> with 
 
   Widget _buildSelectedIngredients() {
     return Container(
-      height: 100,
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: selectedIngredients.isEmpty
-          ? const Center(child: Text('Select ingredients to start'))
-          : ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: selectedIngredients.length,
-              itemBuilder: (context, index) {
-                return SelectedIngredientItem(
-                  ingredient: selectedIngredients[index],
-                  onRemove: () {
-                    setState(() {
-                      selectedIngredients.removeAt(index);
-                    });
-                  },
-                );
-              },
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "What's your Ingredients?",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            height: 120,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: selectedIngredients.isEmpty
+                ? const Center(child: Text('Select ingredients to start'))
+                : ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: selectedIngredients.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: Column(
+                          children: [
+                            SelectedIngredientItem(
+                              ingredient: selectedIngredients[index],
+                              onRemove: () {
+                                setState(() {
+                                  selectedIngredients.removeAt(index);
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              selectedIngredients[index].name,
+                              style: const TextStyle(fontSize: 12),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
