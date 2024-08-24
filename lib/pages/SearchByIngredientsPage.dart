@@ -4,6 +4,7 @@ import 'package:platepal/components/SelectedIngredientItem.dart';
 import 'package:platepal/models/ingredient.dart';
 import 'package:platepal/database_helper.dart';
 import 'package:platepal/pages/RecipePreviewPage.dart';
+import 'package:platepal/components/AppBar.dart';
 
 class SearchByIngredientsPage extends StatefulWidget {
   const SearchByIngredientsPage({super.key});
@@ -47,8 +48,8 @@ class _SearchByIngredientsPageState extends State<SearchByIngredientsPage> with 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Search by Ingredients'),
+      appBar: CustomAppBar(
+        title: 'Search by Ingredients',
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
@@ -144,6 +145,7 @@ class _SearchByIngredientsPageState extends State<SearchByIngredientsPage> with 
     final recipes = await DatabaseHelper.instance.searchRecipesByIngredients(selectedIngredientIds);
     
     Navigator.push(
+      // ignore: use_build_context_synchronously
       context,
       MaterialPageRoute(
         builder: (context) => RecipeListPage(recipes: recipes),
@@ -155,27 +157,78 @@ class _SearchByIngredientsPageState extends State<SearchByIngredientsPage> with 
 class RecipeListPage extends StatelessWidget {
   final List<Map<String, dynamic>> recipes;
 
-  const RecipeListPage({Key? key, required this.recipes}) : super(key: key);
+  const RecipeListPage({super.key, required this.recipes});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Matching Recipes')),
+      appBar: const CustomAppBar(title: 'Matching Recipes'),
       body: ListView.builder(
         itemCount: recipes.length,
         itemBuilder: (context, index) {
           final recipe = recipes[index];
-          return ListTile(
-            title: Text(recipe['name']),
-            subtitle: Text('Matched: ${recipe['matched_ingredients']} / ${recipe['total_ingredients']}'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => RecipePreviewPage(recipeId: recipe['id']),
-                ),
-              );
-            },
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RecipePreviewPage(recipeId: recipe['id']),
+                  ),
+                );
+              },
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(4),
+                      bottomLeft: Radius.circular(4),
+                    ),
+                    child: Image.asset(
+                      'assets/images/${recipe['image'] ?? 'default_recipe.jpg'}',
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            recipe['name'],
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Matched: ${recipe['matched_ingredients']} / ${recipe['total_ingredients']} ingredients',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Difficulty: ${recipe['difficulty'] ?? 'N/A'}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           );
         },
       ),
