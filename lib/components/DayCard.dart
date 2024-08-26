@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:platepal/pages/RecipePreviewPage.dart';
 
 class DayCard extends StatelessWidget {
   final String day;
   final bool isCurrentDay;
   final Map<String, String> mealPlan;
+  final Map<String, int> mealRecipeIds;
   final List<String> mealTypes;
   final String currentMealType;
   final Function(String) onAddMeal;
@@ -14,6 +16,7 @@ class DayCard extends StatelessWidget {
     required this.day,
     required this.isCurrentDay,
     required this.mealPlan,
+    required this.mealRecipeIds,
     required this.mealTypes,
     required this.currentMealType,
     required this.onAddMeal,
@@ -58,6 +61,7 @@ class DayCard extends StatelessWidget {
 
   Widget _buildMealSection(String mealType, BuildContext context) {
     bool isCurrentMeal = isCurrentDay && mealType == currentMealType;
+    int? recipeId = mealRecipeIds[mealType];
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Column(
@@ -90,10 +94,15 @@ class DayCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (mealPlan[mealType] != null)
+                if (mealPlan[mealType] != null && recipeId != null)
                   IconButton(
                     icon: const Icon(Icons.visibility, color: Color(0xFF64748B)),
-                    onPressed: () => onPreviewRecipe(mealPlan[mealType]!, mealType),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RecipePreviewPage(recipeId: recipeId),
+                      ),
+                    ),
                   ),
                 IconButton(
                   icon: const Icon(Icons.add, color: Color(0xFF64748B)),

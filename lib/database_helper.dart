@@ -165,7 +165,7 @@ class DatabaseHelper {
     try {
       Database db = await instance.database;
       var result = await db.rawQuery('''
-        SELECT ingredients.*, recipe_ingredients.quantity
+        SELECT ingredients.*, recipe_ingredients.quantity, recipe_ingredients.unit
         FROM ingredients
         JOIN recipe_ingredients ON ingredients.id = recipe_ingredients.ingredient_id
         WHERE recipe_ingredients.recipe_id = ?
@@ -325,6 +325,31 @@ class DatabaseHelper {
       return result;
     } catch (e) {
       print("Error searching recipes by ingredients: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> insertRecipeIngredients(int recipeId, List<Map<String, dynamic>> ingredients) async {
+    try {
+      Database db = await instance.database;
+      await db.transaction((txn) async {
+        // First, delete existing ingredients for this recipe
+        await txn.delete('recipe_ingredients', where: 'recipe_id = ?', whereArgs: [recipeId]);
+        
+        // Then insert the new ingredients
+        for (var ingredient in ingredients) {
+          await txn.insert('recipe_ingredients', {
+            'recipe_id': recipeId,
+            'ingredient_id': ingredient['ingredient_id'],
+            'quantity': ingredient['quantity'],
+            'unit': ingredient['unit'],
+            'order': ingredient['order'],
+          });
+        }
+      });
+      print("Inserted ${ingredients.length} ingredients for recipe $recipeId");
+    } catch (e) {
+      print("Error inserting recipe ingredients: $e");
       rethrow;
     }
   }

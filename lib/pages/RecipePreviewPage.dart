@@ -15,6 +15,7 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
   late Future<Map<String, dynamic>> _recipeFuture;
   late Future<List<Map<String, dynamic>>> _ingredientsFuture;
   bool _isStarred = false;
+  int _servings = 1; // Default serving size
 
   @override
   void initState() {
@@ -25,7 +26,6 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
 
   Future<Map<String, dynamic>> _loadRecipe() async {
     final recipe = await DatabaseHelper.instance.getRecipe(widget.recipeId);
-    print("Raw instructions: ${recipe['instructions']}"); // Debug print
     setState(() {
       _isStarred = recipe['is_starred'] == 1;
     });
@@ -42,6 +42,20 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
     setState(() {
       _isStarred = !_isStarred;
     });
+  }
+
+  void _incrementServings() {
+    setState(() {
+      _servings++;
+    });
+  }
+
+  void _decrementServings() {
+    if (_servings > 1) {
+      setState(() {
+        _servings--;
+      });
+    }
   }
 
   @override
@@ -69,6 +83,7 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildRecipeInfo(recipe),
+                      _buildServingAdjuster(),
                       const SizedBox(height: 16),
                       _buildIngredientsCard(),
                       const SizedBox(height: 16),
@@ -147,8 +162,53 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _buildInfoColumn('Difficulty', recipe['difficulty']),
-          _buildInfoColumn('Servings', '${recipe['servings'] ?? "1-2 Servings"}'),
+          _buildNutritionRow('Calories: ', recipe['calories'], 'kcal'),
         ],
+      ),
+    );
+  }
+
+  Widget _buildServingAdjuster() {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Servings',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.remove),
+                  onPressed: _decrementServings,
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    '$_servings',
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: _incrementServings,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Note: Ingredient quantities are automatically adjusted. For large batch cooking, please refer to additional sources to ensure accuracy.',
+              style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -187,6 +247,8 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: ingredients.map((ingredient) {
+              // Adjust the quantity based on the number of servings
+              num adjustedQuantity = (ingredient['quantity'] as num) * _servings;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 4.0),
                 child: Row(
@@ -194,7 +256,7 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
                   children: [
                     const Text('• ', style: TextStyle(fontSize: 16)),
                     Expanded(
-                      child: Text('${ingredient['quantity']} ${ingredient['name']}'),
+                      child: Text('${adjustedQuantity.toStringAsFixed(1)} ${ingredient['unit']} ${ingredient['name']}'),
                     ),
                   ],
                 ),
@@ -232,26 +294,39 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
 
   Widget _buildNutritionalInfo(Map<String, dynamic> recipe) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildNutritionRow('Calories', recipe['calories'], 'kcal'),
-        _buildNutritionRow('Protein', recipe['protein'], 'g'),
-        _buildNutritionRow('Carbohydrates', recipe['carbohydrates'], 'g'),
-        _buildNutritionRow('Fat', recipe['fat'], 'g'),
-        _buildNutritionRow('Saturated Fat', recipe['saturated_fat'], 'g'),
-        _buildNutritionRow('Cholesterol', recipe['cholesterol'], 'mg'),
-        _buildNutritionRow('Sodium', recipe['sodium'], 'mg'),
+        Column(
+          children: [
+            _buildNutritionRow('Calories', recipe['calories'], 'kcal'),
+            _buildNutritionRow('Protein', recipe['protein'], 'g'),
+            _buildNutritionRow('Carbohydrates', recipe['carbohydrates'], 'g'),
+            _buildNutritionRow('Fat', recipe['fat'], 'g'),
+            _buildNutritionRow('Saturated Fat', recipe['saturated_fat'], 'g'),
+            _buildNutritionRow('Cholesterol', recipe['cholesterol'], 'mg'),
+            _buildNutritionRow('Sodium', recipe['sodium'], 'mg'),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Note: Nutritional values are estimates and may vary. Values shown are for the entire recipe.',
+          style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey),
+        ),
       ],
     );
   }
 
   Widget _buildNutritionRow(String label, dynamic value, String unit) {
+    // Scale the nutritional value based on the number of servings
+    num scaledValue = (value as num) * _servings;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-          Text('$value $unit'),
+          Text('${scaledValue.toStringAsFixed(1)} $unit'),
         ],
       ),
     );

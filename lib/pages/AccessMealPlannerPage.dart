@@ -103,6 +103,18 @@ class _MealPlannerPageState extends State<MealPlannerPage> {
     );
   }
 
+  Map<String, int> _getMealRecipeIds(String day) {
+    Map<String, int> recipeIds = {};
+    for (String mealType in mealTypes) {
+      String? recipeName = mealPlan[day]?[mealType];
+      if (recipeName != null) {
+        int recipeId = recipes.firstWhere((r) => r['name'] == recipeName)['id'];
+        recipeIds[mealType] = recipeId;
+      }
+    }
+    return recipeIds;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,6 +144,7 @@ class _MealPlannerPageState extends State<MealPlannerPage> {
                       day: day,
                       isCurrentDay: day == currentDay,
                       mealPlan: mealPlan[day] ?? {},
+                      mealRecipeIds: _getMealRecipeIds(day),
                       mealTypes: mealTypes,
                       currentMealType: currentMealType,
                       onAddMeal: (mealType) => _showAddMealDialog(context, day, mealType),

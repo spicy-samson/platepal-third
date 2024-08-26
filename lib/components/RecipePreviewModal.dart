@@ -64,6 +64,8 @@ class RecipePreviewModal extends StatelessWidget {
                           _buildIngredientsList(),
                           const SizedBox(height: 16),
                           _buildInstructions(),
+                          const SizedBox(height: 16),
+                          _buildNutritionalInfo(),
                         ],
                       ),
                     ),
@@ -104,7 +106,7 @@ class RecipePreviewModal extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildInfoItem(Icons.restaurant_menu, recipe['difficulty'] ?? 'N/A'),
-          _buildInfoItem(Icons.people, '${recipe['servings'] ?? '1-2'} servings'),
+          _buildInfoItem(Icons.people, '${recipe['servings'] ?? 1} servings'),
         ],
       ),
     );
@@ -140,7 +142,7 @@ class RecipePreviewModal extends StatelessWidget {
             ...snapshot.data!.map((ingredient) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Text('• ${ingredient['quantity']} ${ingredient['name']}'),
+                child: Text('• ${ingredient['quantity']} ${ingredient['unit']} ${ingredient['name']}'),
               );
             }),
           ],
@@ -171,6 +173,36 @@ class RecipePreviewModal extends StatelessWidget {
           );
         }),
       ],
+    );
+  }
+
+  Widget _buildNutritionalInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Nutritional Information', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        _buildNutritionRow('Calories', recipe['calories'], 'kcal'),
+        _buildNutritionRow('Protein', recipe['protein'], 'g'),
+        _buildNutritionRow('Carbohydrates', recipe['carbohydrates'], 'g'),
+        _buildNutritionRow('Fat', recipe['fat'], 'g'),
+        _buildNutritionRow('Saturated Fat', recipe['saturated_fat'], 'g'),
+        _buildNutritionRow('Cholesterol', recipe['cholesterol'], 'mg'),
+        _buildNutritionRow('Sodium', recipe['sodium'], 'mg'),
+      ],
+    );
+  }
+
+  Widget _buildNutritionRow(String label, dynamic value, String unit) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label),
+          Text('$value $unit'),
+        ],
+      ),
     );
   }
 }
