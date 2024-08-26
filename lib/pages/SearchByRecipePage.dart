@@ -7,7 +7,6 @@ class SearchByRecipePage extends StatefulWidget {
   const SearchByRecipePage({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _SearchByRecipePageState createState() => _SearchByRecipePageState();
 }
 
@@ -16,17 +15,13 @@ class _SearchByRecipePageState extends State<SearchByRecipePage> with TickerProv
   List<Map<String, dynamic>> _recipes = [];
   List<Map<String, dynamic>> _searchResults = [];
   TabController? _tabController;
-  final List<String> _categories = ['All', 'Main Dish', 'Side Dish', 'Dessert', 'Snack'];
+  List<String> _categories = ['All'];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _initTabController();
-    _loadRecipes();
-  }
-
-  void _initTabController() {
-    _tabController = TabController(length: _categories.length, vsync: this);
+    _loadCategoriesAndRecipes();
   }
 
   @override
@@ -36,11 +31,16 @@ class _SearchByRecipePageState extends State<SearchByRecipePage> with TickerProv
     super.dispose();
   }
 
-  Future<void> _loadRecipes() async {
+  Future<void> _loadCategoriesAndRecipes() async {
+    final categories = await DatabaseHelper.instance.queryAllRecipeCategories();
     final recipes = await DatabaseHelper.instance.queryAllRecipes();
+    
     if (mounted) {
       setState(() {
+        _categories = ['All', ...categories.map((c) => c['name'] as String)];
         _recipes = recipes;
+        _tabController = TabController(length: _categories.length, vsync: this);
+        _isLoading = false;
       });
     }
   }
@@ -144,7 +144,7 @@ class _SearchByRecipePageState extends State<SearchByRecipePage> with TickerProv
 
   @override
   Widget build(BuildContext context) {
-    if (_tabController == null) {
+    if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -163,22 +163,20 @@ class _SearchByRecipePageState extends State<SearchByRecipePage> with TickerProv
             child: TabBarView(
               controller: _tabController,
               children: _categories.map((category) {
-                return _recipes.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(8.0),
-                        itemCount: _getFilteredRecipes(category).length,
-                        itemBuilder: (context, index) {
-                          final recipe = _getFilteredRecipes(category)[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
-                            child: RecipeCard(
-                              recipe: recipe,
-                              recipeId: recipe['id'],
-                            ),
-                          );
-                        },
-                      );
+                return ListView.builder(
+                  padding: const EdgeInsets.all(8.0),
+                  itemCount: _getFilteredRecipes(category).length,
+                  itemBuilder: (context, index) {
+                    final recipe = _getFilteredRecipes(category)[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: RecipeCard(
+                        recipe: recipe,
+                        recipeId: recipe['id'],
+                      ),
+                    );
+                  },
+                );
               }).toList(),
             ),
           ),
