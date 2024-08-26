@@ -22,7 +22,7 @@ class MealPlannerRecipePreview extends StatelessWidget {
             ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               child: Image.asset(
-                'assets/images/${recipe['image'] ?? 'default_recipe.jpg'}',
+                'assets/images/${recipe['img'] ?? 'default_recipe.jpg'}',
                 height: 200,
                 fit: BoxFit.cover,
               ),
@@ -38,7 +38,6 @@ class MealPlannerRecipePreview extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text('Difficulty: ${recipe['difficulty']}'),
-                  Text('Cooking Time: ${recipe['cooking_time']} mins'),
                   Text('Calories: ${recipe['calories']} kcal'),
                   const SizedBox(height: 16),
                   const Text('Ingredients:', style: TextStyle(fontWeight: FontWeight.bold)),

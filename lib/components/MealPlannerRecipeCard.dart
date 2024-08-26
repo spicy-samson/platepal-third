@@ -24,7 +24,7 @@ class MealPlannerRecipeCard extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.asset(
-                'assets/images/${recipe['image'] ?? 'default_recipe.jpg'}',
+                'assets/images/${recipe['img'] ?? 'default_recipe.jpg'}',
                 width: 80,
                 height: 80,
                 fit: BoxFit.cover,
@@ -44,10 +44,6 @@ class MealPlannerRecipeCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     'Difficulty: ${recipe['difficulty']}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                  Text(
-                    'Time: ${recipe['cooking_time']} mins',
                     style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],

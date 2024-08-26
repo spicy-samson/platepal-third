@@ -25,6 +25,7 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
 
   Future<Map<String, dynamic>> _loadRecipe() async {
     final recipe = await DatabaseHelper.instance.getRecipe(widget.recipeId);
+    print("Raw instructions: ${recipe['instructions']}"); // Debug print
     setState(() {
       _isStarred = recipe['is_starred'] == 1;
     });
@@ -60,25 +61,7 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
           final recipe = recipeSnapshot.data!;
           return CustomScrollView(
             slivers: [
-              SliverAppBar(
-                expandedHeight: 200.0,
-                floating: false,
-                pinned: true,
-                flexibleSpace: FlexibleSpaceBar(
-                  title: Text(recipe['name']),
-                  background: Image.asset(
-                    'assets/images/${recipe['image'] ?? 'default_recipe.jpg'}',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                actions: [
-                  IconButton(
-                    icon: Icon(_isStarred ? Icons.star : Icons.star_border),
-                    onPressed: _toggleStarred,
-                    color: Colors.amber,
-                  ),
-                ],
-              ),
+              _buildSliverAppBar(recipe),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -96,18 +79,7 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
                       const SizedBox(height: 16),
                       _buildInfoCard(
                         title: 'Nutritional Information',
-                        content: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildNutritionRow('Calories', recipe['calories'], 'kcal'),
-                            _buildNutritionRow('Protein', recipe['protein'], 'g'),
-                            _buildNutritionRow('Carbohydrates', recipe['carbohydrates'], 'g'),
-                            _buildNutritionRow('Fat', recipe['fat'], 'g'),
-                            _buildNutritionRow('Saturated Fat', recipe['saturated_fat'], 'g'),
-                            _buildNutritionRow('Cholesterol', recipe['cholesterol'], 'mg'),
-                            _buildNutritionRow('Sodium', recipe['sodium'], 'mg'),
-                          ],
-                        ),
+                        content: _buildNutritionalInfo(recipe),
                       ),
                     ],
                   ),
@@ -117,6 +89,49 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildSliverAppBar(Map<String, dynamic> recipe) {
+    return SliverAppBar(
+      expandedHeight: 200.0,
+      floating: false,
+      pinned: true,
+      flexibleSpace: FlexibleSpaceBar(
+        title: Text(
+          recipe['name'],
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            shadows: [Shadow(color: Colors.black, blurRadius: 2)],
+          ),
+        ),
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              'assets/images/${recipe['img'] ?? 'default_recipe.jpg'}',
+              fit: BoxFit.cover,
+            ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Colors.black54],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        IconButton(
+          icon: Icon(_isStarred ? Icons.star : Icons.star_border),
+          onPressed: _toggleStarred,
+          color: Colors.amber,
+        ),
+      ],
     );
   }
 
@@ -131,34 +146,26 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Difficulty',
-                style: TextStyle(color: Colors.grey[600], fontSize: 12),
-              ),
-              Text(
-                recipe['difficulty'],
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                'Servings',
-                style: TextStyle(color: Colors.grey[600], fontSize: 12),
-              ),
-              Text(
-                '${recipe['servings'] ?? "1-2 Servings"}',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-            ],
-          ),
+          _buildInfoColumn('Difficulty', recipe['difficulty']),
+          _buildInfoColumn('Servings', '${recipe['servings'] ?? "1-2 Servings"}'),
         ],
       ),
+    );
+  }
+
+  Widget _buildInfoColumn(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+        ),
+        Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+      ],
     );
   }
 
@@ -175,39 +182,24 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
         }
 
         final ingredients = snapshot.data!;
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
+        return _buildInfoCard(
+          title: 'Ingredients',
+          content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Ingredients',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+            children: ingredients.map((ingredient) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 4.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('• ', style: TextStyle(fontSize: 16)),
+                    Expanded(
+                      child: Text('${ingredient['quantity']} ${ingredient['name']}'),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 8),
-              ...ingredients.map((ingredient) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 4.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('• ', style: TextStyle(fontSize: 16)),
-                      Expanded(
-                        child: Text('${ingredient['quantity']} ${ingredient['name']}'),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ],
+              );
+            }).toList(),
           ),
         );
       },
@@ -238,6 +230,20 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
     );
   }
 
+  Widget _buildNutritionalInfo(Map<String, dynamic> recipe) {
+    return Column(
+      children: [
+        _buildNutritionRow('Calories', recipe['calories'], 'kcal'),
+        _buildNutritionRow('Protein', recipe['protein'], 'g'),
+        _buildNutritionRow('Carbohydrates', recipe['carbohydrates'], 'g'),
+        _buildNutritionRow('Fat', recipe['fat'], 'g'),
+        _buildNutritionRow('Saturated Fat', recipe['saturated_fat'], 'g'),
+        _buildNutritionRow('Cholesterol', recipe['cholesterol'], 'mg'),
+        _buildNutritionRow('Sodium', recipe['sodium'], 'mg'),
+      ],
+    );
+  }
+
   Widget _buildNutritionRow(String label, dynamic value, String unit) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -252,15 +258,43 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
   }
 
   Widget _buildNumberedInstructions(String instructions) {
-    List<String> steps = instructions.split('\n');
+    List<String> steps = instructions
+        .split('\n')
+        .map((step) => step.trim().replaceAll('\n', ''))  // Remove any remaining '\n'
+        .where((step) => step.isNotEmpty)
+        .toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: steps.asMap().entries.map((entry) {
         int idx = entry.key;
         String step = entry.value;
         return Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: Text("${idx + 1}. $step"),
+          padding: const EdgeInsets.only(bottom: 16.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '${idx + 1}',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  step,
+                  style: const TextStyle(height: 1.5),
+                ),
+              ),
+            ],
+          ),
         );
       }).toList(),
     );

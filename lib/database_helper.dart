@@ -37,7 +37,6 @@ class DatabaseHelper {
 
         ByteData data;
         try {
-          // Try different asset paths
           List<String> possiblePaths = [
             "assets/platepal.db",
             "assets/db/platepal.db",
@@ -162,18 +161,6 @@ class DatabaseHelper {
     }
   }
 
-  // Future<List<Map<String, dynamic>>> queryAllIngredients() async {
-  //   try {
-  //     Database db = await instance.database;
-  //     var result = await db.query('ingredients');
-  //     print("Queried ${result.length} ingredients");
-  //     return result;
-  //   } catch (e) {
-  //     print("Error querying ingredients: $e");
-  //     rethrow;
-  //   }
-  // }
-
   Future<List<Map<String, dynamic>>> getRecipeIngredients(int recipeId) async {
     try {
       Database db = await instance.database;
@@ -206,7 +193,7 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> queryAllIngredientCategories() async {
     try {
       Database db = await instance.database;
-      var result = await db.query('ingredient_categories');
+      var result = await db.query('ingredient_categories', orderBy: 'id');
       print("Queried ${result.length} ingredient categories");
       return result;
     } catch (e) {
@@ -253,21 +240,21 @@ class DatabaseHelper {
   }
 
   Future<List<Map<String, dynamic>>> searchRecipes(String query) async {
-      try {
-        Database db = await instance.database;
-        var result = await db.rawQuery('''
-          SELECT recipes.*, recipe_categories.name as category_name
-          FROM recipes
-          JOIN recipe_categories ON recipes.category_id = recipe_categories.id
-          WHERE recipes.name LIKE ?
-        ''', ['%$query%']);
-        print("Found ${result.length} recipes matching query: $query");
-        return result;
-      } catch (e) {
-        print("Error searching recipes: $e");
-        rethrow;
-      }
+    try {
+      Database db = await instance.database;
+      var result = await db.rawQuery('''
+        SELECT recipes.*, recipe_categories.name as category_name
+        FROM recipes
+        JOIN recipe_categories ON recipes.category_id = recipe_categories.id
+        WHERE recipes.name LIKE ?
+      ''', ['%$query%']);
+      print("Found ${result.length} recipes matching query: $query");
+      return result;
+    } catch (e) {
+      print("Error searching recipes: $e");
+      rethrow;
     }
+  }
 
   Future<void> updateRecipeStarred(int id, int isStarred) async {
     try {
@@ -292,6 +279,7 @@ class DatabaseHelper {
         SELECT ingredients.*, ingredient_categories.name as category_name
         FROM ingredients
         JOIN ingredient_categories ON ingredients.category_id = ingredient_categories.id
+        ORDER BY ingredient_categories.id, ingredients.name
       ''');
       print("Queried ${result.length} ingredients");
       return result;
@@ -340,5 +328,4 @@ class DatabaseHelper {
       rethrow;
     }
   }
-  
 }

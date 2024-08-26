@@ -16,15 +16,15 @@ class SearchByIngredientsPage extends StatefulWidget {
 
 class _SearchByIngredientsPageState extends State<SearchByIngredientsPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  List<String> ingredientCategories = ['All', 'Meat', 'Vegetables and Fruits', 'Seafood', 'Spices and herbs', 'Condiments'];
+  List<String> ingredientCategories = ['All'];
   List<Ingredient> selectedIngredients = [];
   Map<String, List<Ingredient>> categoryIngredients = {};
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: ingredientCategories.length, vsync: this);
-    _loadIngredients();
+    _loadCategoriesAndIngredients();
   }
 
   @override
@@ -33,20 +33,32 @@ class _SearchByIngredientsPageState extends State<SearchByIngredientsPage> with 
     super.dispose();
   }
 
-  Future<void> _loadIngredients() async {
+  Future<void> _loadCategoriesAndIngredients() async {
+    final categories = await DatabaseHelper.instance.queryAllIngredientCategories();
     final ingredients = await DatabaseHelper.instance.queryAllIngredients();
+    
     setState(() {
+      ingredientCategories = ['All', ...categories.map((c) => c['name'] as String)];
+      _tabController = TabController(length: ingredientCategories.length, vsync: this);
+
       for (var category in ingredientCategories) {
         categoryIngredients[category] = ingredients
             .map((map) => Ingredient.fromMap(map))
             .where((ingredient) => category == 'All' || ingredient.category == category)
             .toList();
       }
+      isLoading = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: CustomAppBar(
         title: 'Search by Ingredients',
@@ -178,7 +190,6 @@ class _SearchByIngredientsPageState extends State<SearchByIngredientsPage> with 
     final recipes = await DatabaseHelper.instance.searchRecipesByIngredients(selectedIngredientIds);
     
     Navigator.push(
-      // ignore: use_build_context_synchronously
       context,
       MaterialPageRoute(
         builder: (context) => RecipeListPage(recipes: recipes),
@@ -220,7 +231,7 @@ class RecipeListPage extends StatelessWidget {
                       bottomLeft: Radius.circular(4),
                     ),
                     child: Image.asset(
-                      'assets/images/${recipe['image'] ?? 'default_recipe.jpg'}',
+                      'assets/images/${recipe['img'] ?? 'default_recipe.jpg'}',
                       width: 120,
                       height: 120,
                       fit: BoxFit.cover,
