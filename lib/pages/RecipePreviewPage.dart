@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:platepal/database_helper.dart';
+import 'package:video_player/video_player.dart';
+import 'package:chewie/chewie.dart';
 
 class RecipePreviewPage extends StatefulWidget {
   final int recipeId;
@@ -7,7 +9,6 @@ class RecipePreviewPage extends StatefulWidget {
   const RecipePreviewPage({super.key, required this.recipeId});
 
   @override
-  // ignore: library_private_types_in_public_api
   _RecipePreviewPageState createState() => _RecipePreviewPageState();
 }
 
@@ -15,7 +16,9 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
   late Future<Map<String, dynamic>> _recipeFuture;
   late Future<List<Map<String, dynamic>>> _ingredientsFuture;
   bool _isStarred = false;
-  int _servings = 1; // Default serving size
+  int _servings = 1;
+  VideoPlayerController? _videoPlayerController;
+  ChewieController? _chewieController;
 
   @override
   void initState() {
@@ -28,12 +31,39 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
     final recipe = await DatabaseHelper.instance.getRecipe(widget.recipeId);
     setState(() {
       _isStarred = recipe['is_starred'] == 1;
+      if (recipe['vid'] != null) {
+        _initializeVideoPlayer(recipe['vid']);
+      }
     });
     return recipe;
   }
 
   Future<List<Map<String, dynamic>>> _loadIngredients() async {
     return await DatabaseHelper.instance.getRecipeIngredients(widget.recipeId);
+  }
+
+  void _initializeVideoPlayer(String videoPath) async {
+    _videoPlayerController = VideoPlayerController.asset('assets/videos/$videoPath');
+    await _videoPlayerController!.initialize();
+    _chewieController = ChewieController(
+      videoPlayerController: _videoPlayerController!,
+      autoPlay: false,
+      looping: false,
+      aspectRatio: _videoPlayerController!.value.aspectRatio,
+      allowFullScreen: true,
+      allowMuting: true,
+      showControls: true,
+      placeholder: Container(
+        color: Colors.grey,
+      ),
+      materialProgressColors: ChewieProgressColors(
+        playedColor: Theme.of(context).primaryColor,
+        handleColor: Theme.of(context).primaryColor,
+        backgroundColor: Colors.grey,
+        bufferedColor: Theme.of(context).primaryColorLight,
+      ),
+    );
+    setState(() {});
   }
 
   Future<void> _toggleStarred() async {
@@ -56,6 +86,13 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
         _servings--;
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _videoPlayerController?.dispose();
+    _chewieController?.dispose();
+    super.dispose();
   }
 
   @override
@@ -84,6 +121,8 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
                     children: [
                       _buildRecipeInfo(recipe),
                       _buildServingAdjuster(),
+                      const SizedBox(height: 16),
+                      if (recipe['vid'] != null) _buildVideoCard(),
                       const SizedBox(height: 16),
                       _buildIngredientsCard(),
                       const SizedBox(height: 16),
@@ -213,6 +252,35 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
     );
   }
 
+  Widget _buildVideoCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Recipe Video',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            if (_chewieController != null)
+              AspectRatio(
+                aspectRatio: _videoPlayerController!.value.aspectRatio,
+                child: Chewie(
+                  controller: _chewieController!,
+                ),
+              )
+            else
+              const Center(child: CircularProgressIndicator()),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildInfoColumn(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,7 +315,6 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: ingredients.map((ingredient) {
-              // Adjust the quantity based on the number of servings
               num adjustedQuantity = (ingredient['quantity'] as num) * _servings;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 4.0),
@@ -317,7 +384,6 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
   }
 
   Widget _buildNutritionRow(String label, dynamic value, String unit) {
-    // Scale the nutritional value based on the number of servings
     num scaledValue = (value as num) * _servings;
     
     return Padding(
@@ -335,7 +401,7 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
   Widget _buildNumberedInstructions(String instructions) {
     List<String> steps = instructions
         .split('\n')
-        .map((step) => step.trim().replaceAll('\n', ''))  // Remove any remaining '\n'
+        .map((step) => step.trim().replaceAll('\n', ''))
         .where((step) => step.isNotEmpty)
         .toList();
     return Column(
