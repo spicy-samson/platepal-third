@@ -1,6 +1,6 @@
 # PlatePal
 
-PlatePal is a Flutter-based mobile application designed to help users plan their meals, search for recipes, and manage their dietary needs.
+PlatePal is a commissioned Flutter-based mobile application designed to help users plan their meals, search for recipes, and manage their dietary needs.
 
 ## Table of Contents
 - [Features](#features)
@@ -97,10 +97,9 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## Acknowledgements
 
-- App icon and design elements created by [Author Name]
-- Recipe data sourced from [Source Name]
+- App icon and design elements created for this project
 - Special thanks to the Flutter and Dart communities for their excellent documentation and support
 
 ---
 
-Developed with ❤️ by [Ken Perez](https://github.com/KenPrz)
+This project is commissioned work and is maintained at [https://github.com/KenPrz/platepal](https://github.com/KenPrz/platepal)
