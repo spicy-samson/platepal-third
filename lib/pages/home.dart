@@ -13,54 +13,97 @@ class Home extends StatelessWidget {
     return Scaffold(
       appBar: const CustomAppBar(showBackButton: false),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SvgPicture.asset(
-              'assets/icons/platepal.svg',
-              height: 100,
-              width: 100,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SvgPicture.asset(
+                  'assets/icons/platepal.svg',
+                  height: 120,
+                  width: 120,
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'PlatePal',
+                  style: TextStyle(
+                    fontSize: 32.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+                const SizedBox(height: 48),
+                Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildButton(
+                          context,
+                          'Search by Recipe',
+                          Icons.search,
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const SearchByRecipePage()),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildButton(
+                          context,
+                          'Search by Ingredients',
+                          Icons.restaurant_menu,
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const SearchByIngredientsPage()),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildButton(
+                          context,
+                          'Access Meal Planner',
+                          Icons.calendar_today,
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const MealPlannerPage()),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'PlatePal',
-              style: TextStyle(
-                fontSize: 28.0,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SearchByRecipePage()),
-                );
-              },
-              child: const Text('Search by Recipe'),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SearchByIngredientsPage()),
-                );
-              },
-              child: const Text('Search by Ingredients'),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MealPlannerPage()),
-                );
-              },
-              child: const Text('Access Meal Planner'),
-            ),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildButton(BuildContext context, String text, IconData icon, VoidCallback onPressed) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: const TextStyle(fontSize: 16),
+          ),
+        ],
       ),
     );
   }
