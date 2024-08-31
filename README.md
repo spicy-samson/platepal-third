@@ -1,16 +1,106 @@
-# platepal
+# PlatePal
 
-A new Flutter project.
+PlatePal is a Flutter-based mobile application designed to help users plan their meals, search for recipes, and manage their dietary needs.
+
+## Table of Contents
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+- [Technologies Used](#technologies-used)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
+
+## Features
+
+- Search recipes by name or ingredients
+- View detailed recipe information including ingredients, instructions, and nutritional data
+- Plan meals for the week
+- User-friendly interface with intuitive navigation
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### Prerequisites
 
-A few resources to get you started if this is your first Flutter project:
+- Flutter SDK (version 3.5.0 or higher)
+- Dart SDK (version 3.5.0 or higher)
+- Android Studio or VS Code with Flutter and Dart plugins
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Installation
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Clone the repository:
+   ```
+   git clone https://github.com/KenPrz/platepal.git
+   ```
+
+2. Navigate to the project directory:
+   ```
+   cd platepal
+   ```
+
+3. Install dependencies:
+   ```
+   flutter pub get
+   ```
+
+4. Run the app:
+   ```
+   flutter run
+   ```
+
+## Usage
+
+- **Home Screen**: Navigate to different sections of the app
+- **Search by Recipe**: Find recipes by name
+- **Search by Ingredients**: Find recipes based on available ingredients
+- **Meal Planner**: Plan your meals for the week
+
+## Project Structure
+
+```
+platepal/
+├── lib/
+│   ├── components/
+│   ├── models/
+│   ├── pages/
+│   ├── database_helper.dart
+│   └── main.dart
+├── assets/
+│   ├── images/
+│   ├── videos/
+│   ├── icons/
+│   ├── ingredients/
+│   └── db/
+├── android/
+├── ios/
+└── pubspec.yaml
+```
+
+## Technologies Used
+
+- Flutter
+- Dart
+- SQLite (via sqflite package)
+- flutter_svg for SVG rendering
+- video_player and chewie for video playback
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+## Acknowledgements
+
+- App icon and design elements created by [Author Name]
+- Recipe data sourced from [Source Name]
+- Special thanks to the Flutter and Dart communities for their excellent documentation and support
+
+---
+
+Developed with ❤️ by [Ken Perez](https://github.com/KenPrz)
