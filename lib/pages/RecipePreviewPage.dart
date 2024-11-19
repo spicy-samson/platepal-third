@@ -184,7 +184,7 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildRecipeInfo(recipe, calories),
-                          // _buildServingAdjuster(),
+                          _buildServingAdjuster(),
                           const SizedBox(height: 16),
                           if (recipe['vid'] != null)
                             _buildVideoCard(youtube_channel),
@@ -286,46 +286,46 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
     );
   }
 
-  // Widget _buildServingAdjuster() {
-  //   return const Card(
-  //     elevation: 2,
-  //     margin: EdgeInsets.symmetric(vertical: 16),
-  //     child: Padding(
-  //       padding: EdgeInsets.all(16),
-  //       child: Column(
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: [
-  //           Text(
-  //             'Servings',
-  //             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-  //           ),
-  //           SizedBox(height: 8),
-  //           Row(
-  //             mainAxisAlignment: MainAxisAlignment.center,
-  //             children: [
-  //               // IconButton(
-  //               //   icon: const Icon(Icons.remove),
-  //               //   onPressed: _decrementServings,
-  //               // ),
-  //               Padding(
-  //                 padding: EdgeInsets.symmetric(horizontal: 16),
-  //                 child: Text(
-  //                   '4',
-  //                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-  //                 ),
-  //               ),
-  //               // IconButton(
-  //               //   icon: const Icon(Icons.add),
-  //               //   onPressed: _incrementServings,
-  //               // ),
-  //             ],
-  //           ),
-  //           SizedBox(height: 8),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
+  Widget _buildServingAdjuster() {
+    return const Card(
+      elevation: 2,
+      margin: EdgeInsets.symmetric(vertical: 16),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Servings',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // IconButton(
+                //   icon: const Icon(Icons.remove),
+                //   onPressed: _decrementServings,
+                // ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    '4',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                // IconButton(
+                //   icon: const Icon(Icons.add),
+                //   onPressed: _incrementServings,
+                // ),
+              ],
+            ),
+            SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildVideoCard(String youtube_channel) {
     return Card(
