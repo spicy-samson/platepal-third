@@ -1,8 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:platepal/database_helper.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
-
 class RecipePreviewPage extends StatefulWidget {
   final int recipeId;
 
@@ -15,6 +16,7 @@ class RecipePreviewPage extends StatefulWidget {
 class _RecipePreviewPageState extends State<RecipePreviewPage> {
   late Future<Map<String, dynamic>> _recipeFuture;
   late Future<List<Map<String, dynamic>>> _ingredientsFuture;
+  late Future<Map<String, dynamic>> _fixedDataFuture;
   bool _isStarred = false;
   int _servings = 1;
   VideoPlayerController? _videoPlayerController;
@@ -25,6 +27,7 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
     super.initState();
     _recipeFuture = _loadRecipe();
     _ingredientsFuture = _loadIngredients();
+    _fixedDataFuture = _loadFixedData();
   }
 
   Future<Map<String, dynamic>> _loadRecipe() async {
@@ -40,6 +43,33 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
 
   Future<List<Map<String, dynamic>>> _loadIngredients() async {
     return await DatabaseHelper.instance.getRecipeIngredients(widget.recipeId);
+  }
+
+ Future<Map<String, dynamic>> _loadFixedData() async {
+  final String response =
+      await rootBundle.loadString('assets/fixed-data/recipe.json');
+  final List<dynamic> data = json.decode(response);
+  return Map.fromEntries(
+    data.map((item) {
+      final name = item['Recipe Name'] ?? 'Unknown';
+      final ingredients = item['Ingredients'] ?? [];
+      final nutrition = item['Nutritional Info'] ?? {};
+
+      return MapEntry(name, {
+        'name': name,
+        'Ingredients': ingredients,
+        'Nutritional Info': nutrition,
+      });
+    }),
+  );
+}
+
+  Future<void> _toggleStarred() async {
+    final newStarredValue = _isStarred ? 0 : 1;
+    await DatabaseHelper.instance.updateRecipeStarred(widget.recipeId, newStarredValue);
+    setState(() {
+      _isStarred = !_isStarred;
+    });
   }
 
   void _initializeVideoPlayer(String videoPath) async {
@@ -64,14 +94,6 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
       ),
     );
     setState(() {});
-  }
-
-  Future<void> _toggleStarred() async {
-    final newStarredValue = _isStarred ? 0 : 1;
-    await DatabaseHelper.instance.updateRecipeStarred(widget.recipeId, newStarredValue);
-    setState(() {
-      _isStarred = !_isStarred;
-    });
   }
 
   void _incrementServings() {
@@ -110,36 +132,59 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
           }
 
           final recipe = recipeSnapshot.data!;
-          return CustomScrollView(
-            slivers: [
-              _buildSliverAppBar(recipe),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildRecipeInfo(recipe),
-                      _buildServingAdjuster(),
-                      const SizedBox(height: 16),
-                      if (recipe['vid'] != null) _buildVideoCard(),
-                      const SizedBox(height: 16),
-                      _buildIngredientsCard(),
-                      const SizedBox(height: 16),
-                      _buildInfoCard(
+          return FutureBuilder<Map<String, dynamic>>(
+            future: _fixedDataFuture,
+            builder: (context, fixedDataSnapshot) {
+              if (fixedDataSnapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (fixedDataSnapshot.hasError) {
+                return Center(
+                    child: Text('Error: ${fixedDataSnapshot.error}'));
+              } else if (!fixedDataSnapshot.hasData) {
+                return const Center(
+                    child: Text('No fixed recipe data found.'));
+              }
+
+              final fixedData = fixedDataSnapshot.data!;
+              final fixedRecipeData = fixedData[recipe['name']] ?? {};
+
+              return CustomScrollView(
+                slivers: [
+                  _buildSliverAppBar(recipe),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildRecipeInfo(recipe),
+                          _buildServingAdjuster(),
+                          const SizedBox(height: 16),
+                          if (recipe['vid'] != null) _buildVideoCard(),
+                          const SizedBox(height: 16),
+                          _buildInfoCard(
+                            title: 'Ingredients',
+                            content: _buildIngredientsList(
+                                fixedRecipeData['Ingredients'] ?? []),
+                          ),
+                          const SizedBox(height: 16),
+                         _buildInfoCard(
                         title: 'Instructions',
                         content: _buildNumberedInstructions(recipe['instructions']),
                       ),
-                      const SizedBox(height: 16),
-                      _buildInfoCard(
-                        title: 'Nutritional Information',
-                        content: _buildNutritionalInfo(recipe),
+                                              const SizedBox(height: 16,),
+                          _buildInfoCard(
+                            title: 'Nutritional Information',
+                            content: _buildNutritionalInfo(
+                                fixedRecipeData['Nutritional Info'] ?? {}),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           );
         },
       ),
@@ -208,41 +253,41 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
   }
 
   Widget _buildServingAdjuster() {
-    return Card(
+    return const Card(
       elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 16),
+      margin: EdgeInsets.symmetric(vertical: 16),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Servings',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.remove),
-                  onPressed: _decrementServings,
-                ),
+                // IconButton(
+                //   icon: const Icon(Icons.remove),
+                //   onPressed: _decrementServings,
+                // ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    '$_servings',
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    '4',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: _incrementServings,
-                ),
+                // IconButton(
+                //   icon: const Icon(Icons.add),
+                //   onPressed: _incrementServings,
+                // ),
               ],
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'Note: Ingredient quantities are automatically adjusted. For large batch cooking, please refer to additional sources to ensure accuracy.',
               style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey),
             ),
@@ -297,41 +342,21 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
     );
   }
 
-  Widget _buildIngredientsCard() {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _ingredientsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No ingredients found.'));
-        }
-
-        final ingredients = snapshot.data!;
-        return _buildInfoCard(
-          title: 'Ingredients',
-          content: Column(
+  Widget _buildIngredientsList(List<dynamic> ingredients) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: ingredients.map((ingredient) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 4.0),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: ingredients.map((ingredient) {
-              num adjustedQuantity = (ingredient['quantity'] as num) * _servings;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 4.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('• ', style: TextStyle(fontSize: 16)),
-                    Expanded(
-                      child: Text('${adjustedQuantity.toStringAsFixed(1)} ${ingredient['unit']} ${ingredient['name']}'),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
+            children: [
+              const Text('• ', style: TextStyle(fontSize: 16)),
+              Expanded(child: Text(ingredient)),
+            ],
           ),
         );
-      },
+      }).toList(),
     );
   }
 
@@ -359,29 +384,25 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
     );
   }
 
-  Widget _buildNutritionalInfo(Map<String, dynamic> recipe) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
+  Widget _buildNutritionalInfo(Map<String, dynamic> nutrition) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: nutrition.entries.map((entry) {
+      final value = entry.value?.toString() ?? 'N/A';
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildNutritionRow('Calories', recipe['calories'], 'kcal'),
-            _buildNutritionRow('Protein', recipe['protein'], 'g'),
-            _buildNutritionRow('Carbohydrates', recipe['carbohydrates'], 'g'),
-            _buildNutritionRow('Fat', recipe['fat'], 'g'),
-            _buildNutritionRow('Saturated Fat', recipe['saturated_fat'], 'g'),
-            _buildNutritionRow('Cholesterol', recipe['cholesterol'], 'mg'),
-            _buildNutritionRow('Sodium', recipe['sodium'], 'mg'),
+            Text(entry.key, style: const TextStyle(fontWeight: FontWeight.w500)),
+            Text(value),
           ],
         ),
-        const SizedBox(height: 8),
-        const Text(
-          'Note: Nutritional values are estimates and may vary. Values shown are for the entire recipe.',
-          style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey),
-        ),
-      ],
-    );
-  }
+      );
+    }).toList(),
+  );
+}
+
 
   Widget _buildNutritionRow(String label, dynamic value, String unit) {
     num scaledValue = (value as num) * _servings;

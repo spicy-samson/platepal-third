@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:platepal/components/IngredientItem.dart';
 import 'package:platepal/components/SelectedIngredientItem.dart';
-import 'package:platepal/models/ingredient.dart';
+import 'package:platepal/models/Ingredient.dart';
 import 'package:platepal/database_helper.dart';
 import 'package:platepal/pages/RecipePreviewPage.dart';
 import 'package:platepal/components/AppBar.dart';

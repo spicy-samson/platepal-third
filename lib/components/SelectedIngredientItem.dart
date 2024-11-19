@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:platepal/models/ingredient.dart';
+import 'package:platepal/models/Ingredient.dart';
 
 class SelectedIngredientItem extends StatelessWidget {
   final Ingredient ingredient;

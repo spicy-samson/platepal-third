@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:platepal/models/ingredient.dart';
+import 'package:platepal/models/Ingredient.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class IngredientItem extends StatelessWidget {
