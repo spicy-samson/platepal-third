@@ -117,11 +117,11 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
     super.dispose();
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     return Scaffold(
       body: FutureBuilder<Map<String, dynamic>>(
-        future: _recipeFuture,
+        future: _recipeFuture, // This is used to get data from the database
         builder: (context, recipeSnapshot) {
           if (recipeSnapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -132,21 +132,33 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
           }
 
           final recipe = recipeSnapshot.data!;
-          return FutureBuilder<Map<String, dynamic>>(
-            future: _fixedDataFuture,
-            builder: (context, fixedDataSnapshot) {
-              if (fixedDataSnapshot.connectionState == ConnectionState.waiting) {
+
+          // Load JSON data asynchronously using FutureBuilder
+          return FutureBuilder<String>(
+            future: rootBundle.loadString('assets/fixed-data/recipe.json'),
+            builder: (context, jsonSnapshot) {
+              if (jsonSnapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
-              } else if (fixedDataSnapshot.hasError) {
-                return Center(
-                    child: Text('Error: ${fixedDataSnapshot.error}'));
-              } else if (!fixedDataSnapshot.hasData) {
-                return const Center(
-                    child: Text('No fixed recipe data found.'));
+              } else if (jsonSnapshot.hasError) {
+                return Center(child: Text('Error loading JSON: ${jsonSnapshot.error}'));
+              } else if (!jsonSnapshot.hasData) {
+                return const Center(child: Text('No fixed recipe data found.'));
               }
 
-              final fixedData = fixedDataSnapshot.data!;
-              final fixedRecipeData = fixedData[recipe['name']] ?? {};
+              // Decode the JSON data
+              final jsonData = json.decode(jsonSnapshot.data!);
+              
+              // Search for the recipe by matching the "Recipe Name"
+              final fixedData = (jsonData as List).firstWhere(
+                (r) => r['Recipe Name'] == recipe['name'],
+                orElse: () => {}, // Return an empty map if not found
+              );
+
+              // Extract the Calories from the Nutritional Info
+              final calories = fixedData.isNotEmpty && fixedData['Nutritional Info'] != null
+              ? fixedData['Nutritional Info']['Calories']
+              : 'Calories not available'; // Default message if Calories are not found
+
 
               return CustomScrollView(
                 slivers: [
@@ -157,7 +169,7 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildRecipeInfo(recipe),
+                          _buildRecipeInfo(recipe, calories),
                           _buildServingAdjuster(),
                           const SizedBox(height: 16),
                           if (recipe['vid'] != null) _buildVideoCard(),
@@ -165,18 +177,18 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
                           _buildInfoCard(
                             title: 'Ingredients',
                             content: _buildIngredientsList(
-                                fixedRecipeData['Ingredients'] ?? []),
+                                fixedData['Ingredients'] ?? []),
                           ),
                           const SizedBox(height: 16),
-                         _buildInfoCard(
-                        title: 'Instructions',
-                        content: _buildNumberedInstructions(recipe['instructions']),
-                      ),
-                                              const SizedBox(height: 16,),
+                          _buildInfoCard(
+                            title: 'Instructions',
+                            content: _buildNumberedInstructions(recipe['instructions']),
+                          ),
+                          const SizedBox(height: 16),
                           _buildInfoCard(
                             title: 'Nutritional Information',
                             content: _buildNutritionalInfo(
-                                fixedRecipeData['Nutritional Info'] ?? {}),
+                                fixedData['Nutritional Info'] ?? {}),
                           ),
                         ],
                       ),
@@ -234,7 +246,7 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
     );
   }
 
-  Widget _buildRecipeInfo(Map<String, dynamic> recipe) {
+  Widget _buildRecipeInfo(Map<String, dynamic> recipe, String calories) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -246,7 +258,7 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _buildInfoColumn('Difficulty', recipe['difficulty']),
-          _buildNutritionRow('Calories: ', recipe['calories'], 'kcal'),
+          _buildNutritionRow('Calories: ', calories, 'kcal'),
         ],
       ),
     );
@@ -404,16 +416,14 @@ class _RecipePreviewPageState extends State<RecipePreviewPage> {
 }
 
 
-  Widget _buildNutritionRow(String label, dynamic value, String unit) {
-    num scaledValue = (value as num) * _servings;
-    
+  Widget _buildNutritionRow(String label,String calories, String unit) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-          Text('${scaledValue.toStringAsFixed(1)} $unit'),
+          Text('$calories'),
         ],
       ),
     );
